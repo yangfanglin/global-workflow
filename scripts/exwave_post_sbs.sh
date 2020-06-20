@@ -105,17 +105,17 @@
   echo ' '
   [[ "$LOUD" = YES ]] && set -x
 
+# 0.c.5 Define CDATE_POST as a function of RERUN variable setting
+  if [ "${RERUN}" = "YES" ]; then
+    export CDATE_POST=${CDATE_RST}
+    export FHRUN=`$NHOUR ${CDATE_RST} ${CDATE}`
+  else # regular run
+    export CDATE_POST=${CDATE}
+    export FHRUN=0
+  fi
 
 # --------------------------------------------------------------------------- #
 # 1.  Get files that are used by most child scripts
-
-  export DOIBP_WAV='NO'
-  export DOFLD_WAV='YES'
-  export DOPNT_WAV='YES'
-  export DOGRB_WAV='YES'
-  export DOGRI_WAV='YES'
-  export DOSPC_WAV='YES'
-  export DOBLL_WAV='YES'
 
   exit_code=0
 
@@ -339,7 +339,7 @@
 
   if [ "$DOSPC_WAV" = 'YES' ] || [ "$DOBLL_WAV" = 'YES' ]
   then
-    ymdh=`$NDATE -${WAVHINDH} $CDATE`
+    ymdh=`$NDATE -${WAVHINDH} $CDATE_POST`
     tstart="`echo $ymdh | cut -c1-8` `echo $ymdh | cut -c9-10`0000"
     dtspec=3600.            # default time step (not used here)
     sed -e "s/TIME/$tstart/g" \
@@ -351,8 +351,8 @@
    
     ln -s mod_def.$waveuoutpGRD mod_def.ww3
     fhr=$FHMIN_WAV
-    YMD=$(echo $CDATE | cut -c1-8)
-    HMS="$(echo $CDATE | cut -c9-10)0000"
+    YMD=$(echo $CDATE_POST | cut -c1-8)
+    HMS="$(echo $CDATE_POST | cut -c9-10)0000"
     tloop=0
     tloopmax=600
     tsleep=10
@@ -488,6 +488,20 @@
   chmod 744 cmdfile
 
 # 1.a.2 Loop over forecast time to generate post files 
+# Contingency for RERUN=YES
+  if [ "${RERUN}" = "YES" ]; then
+    fhr=$((FHRUN + FHMIN_WAV))
+    if [ $FHMAX_HF_WAV -gt 0 ] && [ $FHOUT_HF_WAV -gt 0 ] && [ $fhr -lt $FHMAX_HF_WAV ]; then
+      FHINCG=$FHOUT_HF_WAV
+    else
+      FHINCG=$FHOUT_WAV
+    fi
+# Get minimum value to start count from fhr+min(fhrp,fhrg)
+    fhrinc=`echo $(( $FHINCP_WAV < $FHINCG ? $FHINCP_WAV : $FHINCG ))`
+    fhr=$((fhr + fhrinc))
+  else
+    fhr=$FHMIN_WAV
+  fi
 # When executed side-by-side, serial mode (cfp when run after the fcst step)
   fhr=$FHMIN_WAV
   fhrp=$fhr
@@ -573,7 +587,7 @@
               aoc_9km) GRDNAME='arctic' ; GRDRES=9km ; GRIDNR=255  ; MODNR=11   ;;
               ant_9km) GRDNAME='antarc' ; GRDRES=9km ; GRIDNR=255  ; MODNR=11   ;;
               glo_10m) GRDNAME='global' ; GRDRES=0p16 ; GRIDNR=255  ; MODNR=11   ;;
-              gnh_10m) GRDNAME='global' ; GRDRES=0p16 ; GRIDNR=255  ; MODNR=11   ;;
+              gnh_10m) GRDNAME='gnorth' ; GRDRES=0p16 ; GRIDNR=255  ; MODNR=11   ;;
               gsh_15m) GRDNAME='gsouth' ; GRDRES=0p25 ; GRIDNR=255  ; MODNR=11   ;;
               glo_15m) GRDNAME='global' ; GRDRES=0p25 ; GRIDNR=255  ; MODNR=11   ;;
               ao_20m) GRDNAME='arctic' ; GRDRES=0p33 ; GRIDNR=255  ; MODNR=11   ;;
@@ -704,6 +718,22 @@
     FHINCG=$(( DTFLD_WAV / 3600 ))
     if [ $fhr = $fhrg ]
     then
+# Check if grib2 file created
+      ENSTAG=""
+      if [ ${waveMEMB} ]; then ENSTAG=".${membTAG}${waveMEMB}" ; fi
+      gribchk=${COMPONENTwave}.${cycle}${ENSTAG}.${GRDNAME}.${GRDRES}.f${FH3}.grib2
+      if [ ! -s ${COMOUT}/gridded/${gribchk} ]; then
+        set +x
+        echo ' '
+        echo '********************************************'
+        echo "*** FATAL ERROR: $gribchk not generated "
+        echo '********************************************'
+        echo '     See Details Below '
+        echo ' '
+        [[ "$LOUD" = YES ]] && set -x
+        err=8; export err;${errchk}
+        exit $err
+      fi
       if [ $FHMAX_HF_WAV -gt 0 ] && [ $FHOUT_HF_WAV -gt 0 ] && [ $fhr -lt $FHMAX_HF_WAV ]; then
         FHINCG=$FHOUT_HF_WAV
       else

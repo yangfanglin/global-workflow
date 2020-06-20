@@ -25,4 +25,8 @@ export DOGRI_WAV='YES' # Create interpolated grids
 export DOSPC_WAV='YES' # Spectral post
 export DOBLL_WAV='YES' # Bulletin post
 
+# Set CDATE_RST and RERUN
+export RERUN=${RERUN:-NO}
+export CDATE_RST=${CDATE_RST:-CDATE}
+
 echo "END: config.wavepostsbs"

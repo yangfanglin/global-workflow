@@ -314,7 +314,14 @@ EOF
     for file in $(ls $RSTDIR_TMP/${PDYT}.${cyct}0000.*); do
       file2=$(echo $(basename $file))
       file2=$(echo $file2 | cut -d. -f3-) 
-      $NLN $file $DATA/INPUT/$file2
+# Block to link wave restarts for RERUN. Needs attention for adapting to GFSv16
+# If needed, check with Dingchen Hou for logic in GEFSv12.
+      if [ $testchar = "gfswave" ]; then
+          file2=$(echo $file2 | cut -d. -f2-)
+          $NLN $file $DATA/$file2
+      else
+          $NLN $file $DATA/INPUT/$file2
+      fi
     done
    
     if [ $DOIAU = "YES" ]; then
@@ -420,10 +427,41 @@ if [ $cplwav = ".true." ]; then
   datwave=$COMOUTWW3/${COMPONENTwave}.${PDY}/${cyc}/rundata/
   wavprfx=${COMPONENTwave}${WAV_MEMBER}
   for wavGRD in $waveGRD ; do
-    # Link wave IC for current cycle
-    $NLN ${WRDIR}/${sPDY}.${scyc}0000.restart.${wavGRD} $DATA/restart.${wavGRD}
-    eval $NLN $datwave/${wavprfx}.log.${wavGRD}.${PDY}${cyc} log.${wavGRD}
+    if [ "${RERUN}" != "YES" ]; then
+      # Link wave IC for current cycle
+      $NLN ${WRDIR}/${sPDY}.${scyc}0000.restart.${wavGRD} $DATA/restart.${wavGRD}
+      eval $NLN $datwave/${wavprfx}.log.${wavGRD}.${PDY}${cyc} log.${wavGRD}
+    else
+# Create separate log file for rerun, while keeping log from crashed run for record  
+      eval $NLN $datwave/${wavprfx}.log.rerun.${wavGRD}.${PDY}${cyc} log.${wavGRD}
+    fi
   done
+
+# Contingency for RERUN=YES, checkpoint restart
+# Has NOT been tested for GFSv16. Check logic with Walter in GEFS group if needed.
+  DT2RSTH=$(( DT_2_RST_WAV / 3600 ))
+  RSTHINC=$(( DT2RSTH + RST2IOFF_WAV ))
+  if [ "${RERUN}" = "YES" ]; then
+    fhr=$((FHROT + RSTHINC))
+  else
+    if [ ${RSTHINC} -eq ${WAVHCYC} ]; then
+      RSTHINC=$(( $RSTHINC + ${DT2RSTH} ))
+    fi
+    fhr=$RSTHINC
+  fi
+  while [ $fhr -le $FHMAX_WAV ]; do
+    YMDH=$($NDATE $fhr $CDATE)
+    YMD=$(echo $YMDH | cut -c1-8)
+    HMS="$(echo $YMDH | cut -c9-10)0000"
+    for wavGRD in $waveGRD ; do
+      # Copy wave IC for the next cycle
+      $NLN ${RSTDIR_TMP}/${YMD}.${HMS}.${COMPONENTwave}${WAV_MEMBER}.restart.${wavGRD} $DATA/${YMD}.${HMS}.restart.${wavGRD}
+    done
+    fhr=$((fhr+RSTHINC))
+  done
+
+# Ice and (if) current
+
   if [ "$WW3ICEINP" = "YES" ]; then
     wavicefile=$COMINWW3/${COMPONENTwave}.${PDY}/${cyc}/rundata/${COMPONENTwave}.${WAVEICE_FID}.${cycle}.ice
     if [ ! -f $wavicefile ]; then
@@ -445,8 +483,23 @@ if [ $cplwav = ".true." ]; then
 # Link output files
   cd $DATA
   eval $NLN $datwave/${wavprfx}.log.mww3.${PDY}${cyc} log.mww3
+
 # Loop for gridded output (uses FHINC)
-  fhr=$FHMIN_WAV
+
+# Contingency for RERUN=YES
+  if [ "${RERUN}" = "YES" ]; then
+    fhri=$((FHROT + FHMIN_WAV))
+# Skip initial time step already available from interrupted run
+    FHINC=$FHOUT_WAV
+    if [ $FHMAX_HF_WAV -gt 0 -a $FHOUT_HF_WAV -gt 0 -a $fhri -lt $FHMAX_HF_WAV ]; then
+      FHINC=$FHOUT_HF_WAV
+    fi
+    fhri=$((fhri + FHINC))
+  else
+    fhri=$FHMIN_WAV
+  fi
+  fhr=${fhri}
+
   while [ $fhr -le $FHMAX_WAV ]; do
     YMDH=`$NDATE $fhr $CDATE`
     YMD=$(echo $YMDH | cut -c1-8)
@@ -460,8 +513,19 @@ if [ $cplwav = ".true." ]; then
       fi
     fhr=$((fhr+FHINC))
   done
+
+
 # Loop for point output (uses DTPNT)
-  fhr=$FHMIN_WAV
+
+# Contingency for RERUN=YES
+  if [ "${RERUN}" = "YES" ]; then
+    fhri=$((FHROT + FHMIN_WAV))
+# Skip initial time step already available from interrupted run
+  else
+    fhri=$FHMIN_WAV
+  fi
+  fhr=${fhri}
+
   while [ $fhr -le $FHMAX_WAV ]; do
     YMDH=`$NDATE $fhr $CDATE`
     YMD=$(echo $YMDH | cut -c1-8)
