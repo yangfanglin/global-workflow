@@ -12,4 +12,5 @@ export GLDASSH=$HOMEgfs/scripts/exgdas_gldas.sh.ecf
 export gldas_spinup_hours=72
 export CPCGAUGE=$DMPDIR
 
+
 echo "END: config.gldas"
