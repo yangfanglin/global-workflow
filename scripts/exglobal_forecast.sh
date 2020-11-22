@@ -423,10 +423,10 @@ if [ $RUN_CCPP = "YES" ]; then
     fi
 
     if [ ${do_RRTMGP:-".false."} = ".true." ]; then
-        $NLN $FIX_AM/rrtmgp-data-lw-g256-2018-12-04.nc       $DATA/lw_file_gas              
-        $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-lw.nc        $DATA/lw_file_clouds           
-        $NLN $FIX_AM/rrtmgp-data-sw-g224-2018-12-04.nc       $DATA/sw_file_gas              
-        $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-sw.nc        $DATA/sw_file_clouds           
+        $NLN $FIX_AM/rrtmgp-data-lw-g256-2018-12-04.nc       $DATA/.                           
+        $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-lw.nc        $DATA/.                           
+        $NLN $FIX_AM/rrtmgp-data-sw-g224-2018-12-04.nc       $DATA/.                           
+        $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-sw.nc        $DATA/.                           
     fi
 fi
 
@@ -1123,6 +1123,10 @@ if [ $RUN_CCPP = "YES" ]; then
   doG_cldoptics     = ${doG_cldoptics:-".true."}
   rrtmgp_nGauss_ang = ${rrtmgp_nGauss_ang:-"3"}
   rrtmgp_nrghice    = ${rrtmgp_nrghice:-"3"}
+  lw_file_gas       = ${lw_file_gas:-"rrtmgp-data-lw-g256-2018-12-04.nc"} 
+  lw_file_clouds    = ${lw_file_clouds:-"rrtmgp-cloud-optics-coeffs-lw.nc"}
+  sw_file_gas       = ${sw_file_gas:-"rrtmgp-data-sw-g224-2018-12-04.nc"}
+  sw_file_clouds    = ${sw_file_clouds:-"rrtmgp-cloud-optics-coeffs-sw.nc"}
 EOF
 else
   cat >> input.nml << EOF
