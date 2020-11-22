@@ -422,7 +422,7 @@ if [ $RUN_CCPP = "YES" ]; then
         $NLN $FIX_AM/qr_acr_qs.dat  qr_acr_qs.dat
     fi
 
-    if [ ${do_RRTMGP:-".false."} = .true. ]; then
+    if [ ${do_RRTMGP:-".false."} = ".true." ]; then
         $NLN $FIX_AM/rrtmgp-data-lw-g256-2018-12-04.nc       $DATA/lw_file_gas              
         $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-lw.nc        $DATA/lw_file_clouds           
         $NLN $FIX_AM/rrtmgp-data-sw-g224-2018-12-04.nc       $DATA/sw_file_gas              
