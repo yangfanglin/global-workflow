@@ -46,6 +46,12 @@ fi
 export TYPE="nh"
 export MONO="non-mono"
 
+# oprion for radiation code 
+export do_RRTMGP=".false."
+if [ $RUN_CCPP = "YES" -a $CCPP_SUITE = "FV3_GFS_v16beta_RRTMGP" ]; then
+  export do_RRTMGP=".true."
+fi
+
 # Use stratosphere h2o physics
 export h2o_phys=".true."
 

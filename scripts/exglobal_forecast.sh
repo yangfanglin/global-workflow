@@ -410,6 +410,27 @@ if [ $IAER -gt 0 ] ; then
   done
 fi
 
+
+#--fixed fields that are only used for CCPP physics options
+if [ $RUN_CCPP = "YES" ]; then
+
+    # copy CCN_ACTIVATE.BIN for Thompson microphysics
+    if [ "$CCPP_SUITE" = 'FV3_GSD_v0' -o "$CCPP_SUITE" = 'FV3_GSD_noah' ]; then 
+        $NLN $FIX_AM/CCN_ACTIVATE.BIN  CCN_ACTIVATE.BIN
+        $NLN $FIX_AM/freezeH2O.dat  freezeH2O.dat
+        $NLN $FIX_AM/qr_acr_qg.dat  qr_acr_qg.dat
+        $NLN $FIX_AM/qr_acr_qs.dat  qr_acr_qs.dat
+    fi
+
+    if [ ${do_RRTMGP:-".false."} = .true. ]; then
+        $NLN $FIX_AM/rrtmgp-data-lw-g256-2018-12-04.nc       $DATA/lw_file_gas              
+        $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-lw.nc        $DATA/lw_file_clouds           
+        $NLN $FIX_AM/rrtmgp-data-sw-g224-2018-12-04.nc       $DATA/sw_file_gas              
+        $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-sw.nc        $DATA/sw_file_clouds           
+    fi
+fi
+
+
 #-------------wavewave----------------------
 if [ $cplwav = ".true." ]; then
 
@@ -726,16 +747,6 @@ fi
 
 $NCP $DATA_TABLE  data_table
 $NCP $FIELD_TABLE field_table
-
-# copy CCN_ACTIVATE.BIN for Thompson microphysics
-if [ $RUN_CCPP = "YES" ]; then
-if [ "$CCPP_SUITE" = 'FV3_GSD_v0' -o "$CCPP_SUITE" = 'FV3_GSD_noah' ]; then 
-  $NLN $FIX_AM/CCN_ACTIVATE.BIN  CCN_ACTIVATE.BIN
-  $NLN $FIX_AM/freezeH2O.dat  freezeH2O.dat
-  $NLN $FIX_AM/qr_acr_qg.dat  qr_acr_qg.dat
-  $NLN $FIX_AM/qr_acr_qs.dat  qr_acr_qs.dat
-fi
-fi
 
 #------------------------------------------------------------------
 rm -f nems.configure
@@ -1103,9 +1114,15 @@ if [ $RUN_CCPP = "YES" ]; then
   icloud_bl    = ${icloud_bl:-"1"}
   bl_mynn_edmf = ${bl_mynn_edmf:-"1"}
   bl_mynn_tkeadvect = ${bl_mynn_tkeadvect:-".true."}
-  bl_mynn_edmf_mom = ${bl_mynn_edmf_mom:-"1"}
-  min_lakeice  = ${min_lakeice:-"0.15"}
-  min_seaice   = ${min_seaice:-"0.15"}
+  bl_mynn_edmf_mom  = ${bl_mynn_edmf_mom:-"1"}
+  min_lakeice       = ${min_lakeice:-"0.15"}
+  min_seaice        = ${min_seaice:-"0.15"}
+  do_RRTMGP         = ${do_RRTMGP:-".false."}
+  active_gases      = ${active_gases:-"h2o_co2_o3_n2o_ch4_o2"}
+  nGases            = ${nGases:-6}
+  doG_cldoptics     = ${doG_cldoptics:-".true."}
+  rrtmgp_nGauss_ang = ${rrtmgp_nGauss_ang:-"3"}
+  rrtmgp_nrghice    = ${rrtmgp_nrghice:-"3"}
 EOF
 else
   cat >> input.nml << EOF
@@ -1113,6 +1130,7 @@ else
   iovr_sw      = ${iovr_sw:-"3"}
 EOF
 fi
+
 
 # Add namelist for IAU
 if [ $DOIAU = "YES" ]; then
