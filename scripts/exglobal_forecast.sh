@@ -673,8 +673,11 @@ else # non-monotonic options
   fi
 
 fi
+
 horddp=-$hord_xx
-[[ $hord_xx = 5 -a $RUN_CCPP = "YES" ]] && horddp=$hord_xx
+if [ $hord_xx = 5 -a $RUN_CCPP = "YES" ]; then
+  horddp=$hord_xx
+fi
 
 if [ $(echo $MONO | cut -c-4) != "mono" -a $TYPE = "nh" ]; then
   vtdm4=${vtdm4_nh_nonmono:-"0.06"}
