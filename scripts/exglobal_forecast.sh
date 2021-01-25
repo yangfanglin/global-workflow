@@ -674,11 +674,6 @@ else # non-monotonic options
 
 fi
 
-horddp=-$hord_xx
-if [ $hord_xx = 5 -a $RUN_CCPP = "YES" ]; then
-  horddp=$hord_xx
-fi
-
 if [ $(echo $MONO | cut -c-4) != "mono" -a $TYPE = "nh" ]; then
   vtdm4=${vtdm4_nh_nonmono:-"0.06"}
 else
@@ -992,7 +987,7 @@ deflate_level=${deflate_level:-1}
   hord_mt = $hord_mt
   hord_vt = $hord_xx
   hord_tm = $hord_xx
-  hord_dp = $horddp
+  hord_dp = -$hord_xx
   hord_tr = ${hord_tr:-"8"}
   adjust_dry_mass = ${adjust_dry_mass:-".true."}
   dry_mass=${dry_mass:-98320.0}
