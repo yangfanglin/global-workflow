@@ -2,16 +2,12 @@
 #set -xue
 set -x
 
-while getopts "oc" option;
+while getopts "o" option;
 do
  case $option in
   o)
    echo "Received -o flag for optional checkout of GTG, will check out GTG with EMC_post"
    checkout_gtg="YES"
-   ;;
-  c)
-   echo "Received -c flag, check out ufs-weather-model develop branch with CCPP physics"  
-   run_ccpp="YES"
    ;;
   :)
    echo "option -$OPTARG needs an argument"
@@ -31,11 +27,7 @@ if [[ ! -d fv3gfs.fd ]] ; then
     rm -f ${topdir}/checkout-fv3gfs.log
     git clone https://github.com/ufs-community/ufs-weather-model fv3gfs.fd >> ${topdir}/checkout-fv3gfs.log 2>&1
     cd fv3gfs.fd
-    if [ ${run_ccpp:-"NO"} = "NO" ]; then
-     git checkout GFS.v16.0.15
-    else
-     git checkout b771e5be7e35eaea5ee7f762d644afccab019ed3
-    fi
+    #git checkout b771e5be7e35eaea5ee7f762d644afccab019ed3
     git submodule update --init --recursive
     cd ${topdir}
 else
@@ -104,7 +96,7 @@ if [[ ! -d gfs_wafs.fd ]] ; then
     rm -f ${topdir}/checkout-gfs_wafs.log
     git clone --recursive https://github.com/NOAA-EMC/EMC_gfs_wafs.git gfs_wafs.fd >> ${topdir}/checkout-gfs_wafs.log 2>&1
     cd gfs_wafs.fd
-    git checkout gfs_wafs.v6.0.19
+    git checkout gfs_wafs.v6.0.21
     cd ${topdir}
 else
     echo 'Skip.  Directory gfs_wafs.fd already exists.'
