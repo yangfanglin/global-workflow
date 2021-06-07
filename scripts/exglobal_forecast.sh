@@ -67,11 +67,19 @@ NWPROD=${NWPROD:-${NWROOT:-$pwd}}
 HOMEgfs=${HOMEgfs:-$NWPROD}
 FIX_DIR=${FIX_DIR:-$HOMEgfs/fix}
 FIX_AM=${FIX_AM:-$FIX_DIR/fix_am}
-FIXfv3=${FIXfv3:-$FIX_DIR/fix_fv3_gmted2010}
 DATA=${DATA:-$pwd/fv3tmp$$}    # temporary running directory
 ROTDIR=${ROTDIR:-$pwd}         # rotating archive directory
 ICSDIR=${ICSDIR:-$pwd}         # cold start initial conditions
 DMPDIR=${DMPDIR:-$pwd}         # global dumps for seaice, snow and sst analysis
+
+reso=025
+[[ ${CASE} = "C192" ]] && reso=050
+[[ ${CASE} = "C96" ]]  && reso=100
+if [ ${frac_grid:-".false."} = ".false." ]; then
+ FIXfv3=$FIX_DIR/fix_fv3_gmted2010/${CASE}
+else
+ FIXfv3=$FIX_DIR/fix_fv3_fracoro/${CASE}.mx${reso}_frac
+fi
 
 # Model resolution specific parameters
 DELTIM=${DELTIM:-225}
@@ -381,10 +389,14 @@ fi
 #--------------------------------------------------------------------------
 # Grid and orography data
 for n in $(seq 1 $ntiles); do
-  $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc     $DATA/INPUT/${CASE}_grid.tile${n}.nc
-  $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc $DATA/INPUT/oro_data.tile${n}.nc
+  $NLN $FIXfv3/${CASE}_grid.tile${n}.nc               $DATA/INPUT/${CASE}_grid.tile${n}.nc
+  if [ -s $FIXfv3/${CASE}_oro_data.tile${n}.nc ]; then
+   $NLN $FIXfv3/${CASE}_oro_data.tile${n}.nc           $DATA/INPUT/oro_data.tile${n}.nc
+  else
+   $NLN $FIXfv3/oro_${CASE}.mx${reso}.tile${n}.nc      $DATA/INPUT/oro_data.tile${n}.nc
+  fi
 done
-$NLN $FIXfv3/$CASE/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
+$NLN $FIXfv3/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
 
 # GFS standard input data
 IAER=${IAER:-111}
@@ -583,22 +595,17 @@ FNSMCC=${FNSMCC:-"$FIX_AM/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb
 [[ ! -f $FNSMCC ]] && FNSMCC="$FIX_AM/global_soilmgldas.statsgo.t1534.3072.1536.grb"
 
 
-if [ ${fix_fields_on_tiles:-"NO"} = "YES" }; then
- if [ ${CASE} = "C192" ]; then
-  FIXTILE_DIR=${FIXTILE_DIR:-"${FIX_DIR}/fix_fv3_fracoro/${CASE}.mx050_frac/fix_sfc"}
- else 
-  FIXTILE_DIR=${FIXTILE_DIR:-"${FIX_DIR}/fix_fv3_fracoro/${CASE}.mx025_frac/fix_sfc}
- fi
- FNALBC="${FIXTILE_DIR}/${CASE}.snowfree_albedo.tileX.nc"
- FNALBC2="${FIXTILE_DIR}/${CASE}.facsf.tileX.nc"
- FNTG3C="${FIXTILE_DIR}/${CASE}.substrate_temperature.tileX.nc"
- FNVEGC="${FIXTILE_DIR}/${CASE}.vegetation_greenness.tileX.nc"
- FNVETC="${FIXTILE_DIR}/${CASE}.vegetation_type.tileX.nc"
- FNSOTC="${FIXTILE_DIR}/${CASE}.soil_type.tileX.nc"
- FNVMNC="${FIXTILE_DIR}/${CASE}.vegetation_greenness.tileX.nc"
- FNVMXC="${FIXTILE_DIR}/${CASE}.vegetation_greenness.tileX.nc"
- FNSLPC="${FIXTILE_DIR}/${CASE}.slope_type.tileX.nc"
- FNABSC="${FIXTILE_DIR}/${CASE}.maximum_snow_albedo.tileX.nc"
+if [ ${frac_grid} = ".true." }; then
+ FNALBC="${FIXfv3}/fix_sfc/${CASE}.snowfree_albedo.tileX.nc"
+ FNALBC2="${FIXfv3}/fix_sfc/{CASE}.facsf.tileX.nc"
+ FNTG3C="${FIXfv3}/fix_sfc/{CASE}.substrate_temperature.tileX.nc"
+ FNVEGC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
+ FNVETC="${FIXfv3}/fix_sfc/{CASE}.vegetation_type.tileX.nc"
+ FNSOTC="${FIXfv3}/fix_sfc/{CASE}.soil_type.tileX.nc"
+ FNVMNC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
+ FNVMXC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
+ FNSLPC="${FIXfv3}/fix_sfc/{CASE}.slope_type.tileX.nc"
+ FNABSC="${FIXfv3}/fix_sfc/{CASE}.maximum_snow_albedo.tileX.nc"
 fi
 
 
