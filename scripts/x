@@ -1,0 +1,150 @@
+69a70,72
+> export FIX_AER=${FIX_AER:-$FIX_DIR/fix_aer}
+> export FIX_LUT=${FIX_LUT:-$FIX_DIR/fix_lut}
+> FIXfv3=${FIXfv3:-$FIX_DIR/fix_fv3_gmted2010}
+75,83d77
+< reso=025
+< [[ ${CASE} = "C192" ]] && reso=050
+< [[ ${CASE} = "C96" ]]  && reso=100
+< if [ ${frac_grid:-".false."} = ".false." ]; then
+<  FIXfv3=$FIX_DIR/fix_fv3_gmted2010/${CASE}
+< else
+<  FIXfv3=$FIX_DIR/fix_fv3_fracoro/${CASE}.mx${reso}_frac
+< fi
+< 
+126a121
+> RUN_CCPP=${RUN_CCPP:-"NO"}
+392,397c387,388
+<   $NLN $FIXfv3/${CASE}_grid.tile${n}.nc               $DATA/INPUT/${CASE}_grid.tile${n}.nc
+<   if [ -s $FIXfv3/${CASE}_oro_data.tile${n}.nc ]; then
+<    $NLN $FIXfv3/${CASE}_oro_data.tile${n}.nc           $DATA/INPUT/oro_data.tile${n}.nc
+<   else
+<    $NLN $FIXfv3/oro_${CASE}.mx${reso}.tile${n}.nc      $DATA/INPUT/oro_data.tile${n}.nc
+<   fi
+---
+>   $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc     $DATA/INPUT/${CASE}_grid.tile${n}.nc
+>   $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc $DATA/INPUT/oro_data.tile${n}.nc
+399c390
+< $NLN $FIXfv3/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
+---
+> $NLN $FIXfv3/$CASE/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
+415a407,416
+> ## merra2 aerosol climo
+> for n in 01 02 03 04 05 06 07 08 09 10 11 12; do
+> $NLN $FIX_AER/merra2.aerclim.2003-2014.m${n}.nc $DATA/aeroclim.m${n}.nc
+> done
+> $NLN $FIX_LUT/optics_BC.v1_3.dat $DATA/optics_BC.dat
+> $NLN $FIX_LUT/optics_OC.v1_3.dat $DATA/optics_OC.dat
+> $NLN $FIX_LUT/optics_DU.v15_3.dat $DATA/optics_DU.dat
+> $NLN $FIX_LUT/optics_SS.v3_3.dat $DATA/optics_SS.dat
+> $NLN $FIX_LUT/optics_SU.v1_3.dat $DATA/optics_SU.dat
+> 
+424d424
+< cp $FIX_DIR/fd_nems.yaml                       $DATA/.
+432,446d431
+< #--fixed fields that are only used for CCPP physics options
+<   # copy CCN_ACTIVATE.BIN for Thompson microphysics
+<   $NLN $FIX_AM/CCN_ACTIVATE.BIN                        $DATA/.
+<   $NLN $FIX_AM/freezeH2O.dat                           $DATA/.
+<   $NLN $FIX_AM/qr_acr_qg.dat                           $DATA/.
+<   $NLN $FIX_AM/qr_acr_qs.dat                           $DATA/.
+< 
+< #--RRTMGP fixed fields
+<   #$NLN $FIX_AM/rrtmgp-data-lw-g256-2018-12-04.nc       $DATA/.
+<   #$NLN $FIX_AM/rrtmgp-data-sw-g224-2018-12-04.nc       $DATA/.
+<   $NLN $FIX_AM/rrtmgp-lw-prototype-g128-210413.nc      $DATA/.
+<   $NLN $FIX_AM/rrtmgp-sw-prototype-g131-210413.nc      $DATA/.
+<   $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-lw.nc        $DATA/.
+<   $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-sw.nc        $DATA/.
+< 
+597,611d581
+< 
+< if [ ${frac_grid} = ".true." }; then
+<  FNALBC="${FIXfv3}/fix_sfc/${CASE}.snowfree_albedo.tileX.nc"
+<  FNALBC2="${FIXfv3}/fix_sfc/{CASE}.facsf.tileX.nc"
+<  FNTG3C="${FIXfv3}/fix_sfc/{CASE}.substrate_temperature.tileX.nc"
+<  FNVEGC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
+<  FNVETC="${FIXfv3}/fix_sfc/{CASE}.vegetation_type.tileX.nc"
+<  FNSOTC="${FIXfv3}/fix_sfc/{CASE}.soil_type.tileX.nc"
+<  FNVMNC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
+<  FNVMXC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
+<  FNSLPC="${FIXfv3}/fix_sfc/{CASE}.slope_type.tileX.nc"
+<  FNABSC="${FIXfv3}/fix_sfc/{CASE}.maximum_snow_albedo.tileX.nc"
+< fi
+< 
+< 
+778a749,758
+> # copy CCN_ACTIVATE.BIN for Thompson microphysics
+> if [ $RUN_CCPP = "YES" ]; then
+> if [ "$CCPP_SUITE" = 'FV3_GSD_v0' -o "$CCPP_SUITE" = 'FV3_GSD_noah' ]; then 
+>   $NLN $FIX_AM/CCN_ACTIVATE.BIN  CCN_ACTIVATE.BIN
+>   $NLN $FIX_AM/freezeH2O.dat  freezeH2O.dat
+>   $NLN $FIX_AM/qr_acr_qg.dat  qr_acr_qg.dat
+>   $NLN $FIX_AM/qr_acr_qs.dat  qr_acr_qs.dat
+> fi
+> fi
+> 
+860a841,845
+> cpl:                     ${cpl:-".false."}
+> memuse_verbose:          ${memuse_verbose:-".false."}
+> atmos_nthreads:          $NTHREADS_FV3
+> use_hyper_thread:        ${hyperthread:-".false."}
+> ncores_per_node:         $cores_per_node
+899a885,887
+> #  atmos_nthreads = $NTHREADS_FV3
+> #  use_hyper_thread = ${hyperthread:-".false."}
+> #  ncores_per_node = $cores_per_node
+905c893,895
+< atmos_model_nml="ccpp_suite = $CCPP_SUITE"
+---
+> if [ $RUN_CCPP = "YES" ]; then
+>  atmos_model_nml="ccpp_suite = $CCPP_SUITE"
+> fi
+964c954
+<   range_warn = ${range_warn:-".true."}
+---
+>   range_warn = ${range_warn:-".false."}
+980,981d969
+<   dz_min    = 6
+<   psm_bc   = 1
+1109d1096
+<   cplflx       = ${cplflx:-".false."}
+1114a1102
+>   fcons        = ${fcons:-".true."}
+1121a1110,1113
+> EOF
+> 
+> if [ $RUN_CCPP = "YES" ]; then
+>   cat >> input.nml << EOF
+1123c1115
+<   ltaerosol    = ${ltaerosol:-".true."}
+---
+>   ltaerosol    = ${ltaerosol:-".false."}
+1125c1117
+<   ttendlim     = ${ttendlim:-"-999"}
+---
+>   ttendlim     = ${ttendlim:-"0.005"}
+1135d1126
+<   frac_grid    = ${frac_grid:-".false."}
+1138,1151d1128
+<   do_RRTMGP          = ${do_RRTMGP:-".false."}
+<   active_gases       = ${active_gases:-"h2o_co2_o3_n2o_ch4_o2"}
+<   nGases             = ${nGases:-6}
+<   lw_file_gas        = ${lw_file_gas:-"rrtmgp-lw-prototype-g128-210413.nc"}
+<   lw_file_clouds     = ${lw_file_clouds:-"rrtmgp-cloud-optics-coeffs-lw.nc"}
+<   sw_file_gas        = ${sw_file_gas:-"rrtmgp-sw-prototype-g131-210413.nc"}
+<   sw_file_clouds     = ${sw_file_clouds:-"rrtmgp-cloud-optics-coeffs-sw.nc"}
+<   rrtmgp_nGptsSW     = ${rrtmgp_nGptsSW:-"131"}
+<   rrtmgp_nGptsLW     = ${rrtmgp_nGptsLW:-"128"}
+<   rrtmgp_nBandsLW    = ${rrtmgp_nBandsLW:-"16"}
+<   rrtmgp_nBandsSW    = ${rrtmgp_nBandsSW:-"14"}
+<   doGP_cldoptics_LUT = ${doGP_cldoptics_LUT:-".true."}
+<   doGP_lwscat        = ${doGP_lwscat:-".true."}
+<   use_LW_jacobian    = ${use_LW_jacobian:-".true."}
+1152a1130,1135
+> else
+>   cat >> input.nml << EOF
+>   iovr_lw      = ${iovr_lw:-"3"}
+>   iovr_sw      = ${iovr_sw:-"3"}
+> EOF
+> fi

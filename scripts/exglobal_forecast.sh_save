@@ -67,21 +67,11 @@ NWPROD=${NWPROD:-${NWROOT:-$pwd}}
 HOMEgfs=${HOMEgfs:-$NWPROD}
 FIX_DIR=${FIX_DIR:-$HOMEgfs/fix}
 FIX_AM=${FIX_AM:-$FIX_DIR/fix_am}
-FIX_AER=${FIX_AER:-$FIX_DIR/fix_aer}
-FIX_LUT=${FIX_LUT:-$FIX_DIR/fix_lut}
+FIXfv3=${FIXfv3:-$FIX_DIR/fix_fv3_gmted2010}
 DATA=${DATA:-$pwd/fv3tmp$$}    # temporary running directory
 ROTDIR=${ROTDIR:-$pwd}         # rotating archive directory
 ICSDIR=${ICSDIR:-$pwd}         # cold start initial conditions
 DMPDIR=${DMPDIR:-$pwd}         # global dumps for seaice, snow and sst analysis
-
-reso=025
-[[ ${CASE} = "C192" ]] && reso=050
-[[ ${CASE} = "C96" ]]  && reso=100
-if [ ${frac_grid:-".false."} = ".false." ]; then
- FIXfv3=$FIX_DIR/fix_fv3_gmted2010/${CASE}
-else
- FIXfv3=$FIX_DIR/fix_fv3_fracoro/${CASE}.mx${reso}_frac
-fi
 
 # Model resolution specific parameters
 DELTIM=${DELTIM:-225}
@@ -126,6 +116,7 @@ NTASKS_FV3=${NTASKS_FV3:-$npe_fv3}
 
 TYPE=${TYPE:-"nh"}                  # choices:  nh, hydro
 MONO=${MONO:-"non-mono"}            # choices:  mono, non-mono
+RUN_CCPP=${RUN_CCPP:-"NO"}
 
 QUILTING=${QUILTING:-".true."}
 OUTPUT_GRID=${OUTPUT_GRID:-"gaussian_grid"}
@@ -391,14 +382,10 @@ fi
 #--------------------------------------------------------------------------
 # Grid and orography data
 for n in $(seq 1 $ntiles); do
-  $NLN $FIXfv3/${CASE}_grid.tile${n}.nc               $DATA/INPUT/${CASE}_grid.tile${n}.nc
-  if [ -s $FIXfv3/${CASE}_oro_data.tile${n}.nc ]; then
-   $NLN $FIXfv3/${CASE}_oro_data.tile${n}.nc           $DATA/INPUT/oro_data.tile${n}.nc
-  else
-   $NLN $FIXfv3/oro_${CASE}.mx${reso}.tile${n}.nc      $DATA/INPUT/oro_data.tile${n}.nc
-  fi
+  $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc     $DATA/INPUT/${CASE}_grid.tile${n}.nc
+  $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc $DATA/INPUT/oro_data.tile${n}.nc
 done
-$NLN $FIXfv3/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
+$NLN $FIXfv3/$CASE/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
 
 # GFS standard input data
 IAER=${IAER:-111}
@@ -415,16 +402,6 @@ $NLN $FIX_AM/${H2OFORC}                        $DATA/global_h2oprdlos.f77
 $NLN $FIX_AM/global_solarconstant_noaa_an.txt  $DATA/solarconstant_noaa_an.txt
 $NLN $FIX_AM/global_sfc_emissivity_idx.txt     $DATA/sfc_emissivity_idx.txt
 
-## merra2 aerosol climo
-for n in 01 02 03 04 05 06 07 08 09 10 11 12; do
-$NLN $FIX_AER/merra2.aerclim.2003-2014.m${n}.nc $DATA/aeroclim.m${n}.nc
-done
-$NLN $FIX_LUT/optics_BC.v1_3.dat $DATA/optics_BC.dat
-$NLN $FIX_LUT/optics_OC.v1_3.dat $DATA/optics_OC.dat
-$NLN $FIX_LUT/optics_DU.v15_3.dat $DATA/optics_DU.dat
-$NLN $FIX_LUT/optics_SS.v3_3.dat $DATA/optics_SS.dat
-$NLN $FIX_LUT/optics_SU.v1_3.dat $DATA/optics_SU.dat
-
 $NLN $FIX_AM/global_co2historicaldata_glob.txt $DATA/co2historicaldata_glob.txt
 $NLN $FIX_AM/co2monthlycyc.txt                 $DATA/co2monthlycyc.txt
 if [ $ICO2 -gt 0 ]; then
@@ -433,7 +410,6 @@ if [ $ICO2 -gt 0 ]; then
   done
 fi
 
-cp $FIX_DIR/fd_nems.yaml                       $DATA/.
 $NLN $FIX_AM/global_climaeropac_global.txt     $DATA/aerosol.dat
 if [ $IAER -gt 0 ] ; then
   for file in $(ls $FIX_AM/global_volcanic_aerosols*) ; do
@@ -441,30 +417,28 @@ if [ $IAER -gt 0 ] ; then
   done
 fi
 
-# merra2 aerosol climo
-for n in 01 02 03 04 05 06 07 08 09 10 11 12; do
- $NLN $FIX_AER/merra2.aerclim.2003-2014.m${n}.nc $DATA/aeroclim.m${n}.nc
-done
-$NLN $FIX_LUT/optics_BC.v1_3.dat   $DATA/optics_BC.dat
-$NLN $FIX_LUT/optics_OC.v1_3.dat   $DATA/optics_OC.dat
-$NLN $FIX_LUT/optics_DU.v15_3.dat  $DATA/optics_DU.dat
-$NLN $FIX_LUT/optics_SS.v3_3.dat   $DATA/optics_SS.dat
-$NLN $FIX_LUT/optics_SU.v1_3.dat   $DATA/optics_SU.dat
 
+#--fixed fields that are only used for CCPP physics options
+if [ $RUN_CCPP = "YES" ]; then
 
-# copy CCN_ACTIVATE.BIN for Thompson microphysics
-  $NLN $FIX_AM/CCN_ACTIVATE.BIN                        $DATA/.
-  $NLN $FIX_AM/freezeH2O.dat                           $DATA/.
-  $NLN $FIX_AM/qr_acr_qg.dat                           $DATA/.
-  $NLN $FIX_AM/qr_acr_qs.dat                           $DATA/.
+    # copy CCN_ACTIVATE.BIN for Thompson microphysics
+    if [ "$CCPP_SUITE" = 'FV3_GSD_v0' -o "$CCPP_SUITE" = 'FV3_GSD_noah' ]; then 
+        $NLN $FIX_AM/CCN_ACTIVATE.BIN  CCN_ACTIVATE.BIN
+        $NLN $FIX_AM/freezeH2O.dat  freezeH2O.dat
+        $NLN $FIX_AM/qr_acr_qg.dat  qr_acr_qg.dat
+        $NLN $FIX_AM/qr_acr_qs.dat  qr_acr_qs.dat
+    fi
 
-#--RRTMGP fixed fields
-  #$NLN $FIX_AM/rrtmgp-data-lw-g256-2018-12-04.nc       $DATA/.
-  #$NLN $FIX_AM/rrtmgp-data-sw-g224-2018-12-04.nc       $DATA/.
-  $NLN $FIX_AM/rrtmgp-lw-prototype-g128-210413.nc      $DATA/.
-  $NLN $FIX_AM/rrtmgp-sw-prototype-g131-210413.nc      $DATA/.
-  $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-lw.nc        $DATA/.
-  $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-sw.nc        $DATA/.
+    if [ ${do_RRTMGP:-".false."} = ".true." ]; then
+        #$NLN $FIX_AM/rrtmgp-data-lw-g256-2018-12-04.nc       $DATA/.                           
+        #$NLN $FIX_AM/rrtmgp-data-sw-g224-2018-12-04.nc       $DATA/.                           
+        $NLN $FIX_AM/rrtmgp-lw-prototype-g128-210413.nc      $DATA/.                           
+        $NLN $FIX_AM/rrtmgp-sw-prototype-g131-210413.nc      $DATA/.                           
+        $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-lw.nc        $DATA/.                           
+        $NLN $FIX_AM/rrtmgp-cloud-optics-coeffs-sw.nc        $DATA/.                           
+    fi
+fi
+
 
 #-------------wavewave----------------------
 if [ $cplwav = ".true." ]; then
@@ -615,21 +589,6 @@ FNSMCC=${FNSMCC:-"$FIX_AM/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb
 [[ ! -f $FNSOTC ]] && FNSOTC="$FIX_AM/global_soiltype.statsgo.t1534.3072.1536.rg.grb"
 [[ ! -f $FNABSC ]] && FNABSC="$FIX_AM/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb"
 [[ ! -f $FNSMCC ]] && FNSMCC="$FIX_AM/global_soilmgldas.statsgo.t1534.3072.1536.grb"
-
-
-if [ ${frac_grid} = ".true." }; then
- FNALBC="${FIXfv3}/fix_sfc/${CASE}.snowfree_albedo.tileX.nc"
- FNALBC2="${FIXfv3}/fix_sfc/{CASE}.facsf.tileX.nc"
- FNTG3C="${FIXfv3}/fix_sfc/{CASE}.substrate_temperature.tileX.nc"
- FNVEGC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
- FNVETC="${FIXfv3}/fix_sfc/{CASE}.vegetation_type.tileX.nc"
- FNSOTC="${FIXfv3}/fix_sfc/{CASE}.soil_type.tileX.nc"
- FNVMNC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
- FNVMXC="${FIXfv3}/fix_sfc/{CASE}.vegetation_greenness.tileX.nc"
- FNSLPC="${FIXfv3}/fix_sfc/{CASE}.slope_type.tileX.nc"
- FNABSC="${FIXfv3}/fix_sfc/{CASE}.maximum_snow_albedo.tileX.nc"
-fi
-
 
 # NSST Options
 # nstf_name contains the NSST related parameters
@@ -880,6 +839,11 @@ ENS_SPS:                 ${ENS_SPS:-".false."}
 dt_atmos:                $DELTIM
 output_1st_tstep_rst:    .false.
 calendar:                ${calendar:-'julian'}
+cpl:                     ${cpl:-".false."}
+memuse_verbose:          ${memuse_verbose:-".false."}
+atmos_nthreads:          $NTHREADS_FV3
+use_hyper_thread:        ${hyperthread:-".false."}
+ncores_per_node:         $cores_per_node
 restart_interval:        $restart_interval
 
 quilting:                $QUILTING
@@ -919,12 +883,17 @@ EOF
 #  current_date = $curr_date
 #  calendar = 'julian'
 #  memuse_verbose = .false.
+#  atmos_nthreads = $NTHREADS_FV3
+#  use_hyper_thread = ${hyperthread:-".false."}
+#  ncores_per_node = $cores_per_node
 #  restart_secs = $restart_secs
 #  $coupler_nml
 #/
 
 atmos_model_nml=""
-atmos_model_nml="ccpp_suite = $CCPP_SUITE"
+if [ $RUN_CCPP = "YES" ]; then
+ atmos_model_nml="ccpp_suite = $CCPP_SUITE"
+fi
 
 cat > input.nml <<EOF
 &amip_interp_nml
@@ -983,7 +952,7 @@ deflate_level=${deflate_level:-1}
   grid_type = -1
   make_nh = $make_nh
   fv_debug = ${fv_debug:-".false."}
-  range_warn = ${range_warn:-".true."}
+  range_warn = ${range_warn:-".false."}
   reset_eta = .false.
   n_sponge = ${n_sponge:-"10"}
   nudge_qv = ${nudge_qv:-".true."}
@@ -999,8 +968,6 @@ deflate_level=${deflate_level:-1}
   hydrostatic = $hydrostatic
   phys_hydrostatic = $phys_hydrostatic
   use_hydro_pressure = $use_hydro_pressure
-  dz_min    = 6
-  psm_bc   = 1
   beta = 0.
   a_imp = 1.
   p_fac = 0.1
@@ -1128,7 +1095,6 @@ deflate_level=${deflate_level:-1}
   iopt_stc     = ${iopt_stc:-"1"}
   debug        = ${gfs_phys_debug:-".false."}
   nstf_name    = $nstf_name
-  cplflx       = ${cplflx:-".false."}
   nst_anl      = $nst_anl
   psautco      = ${psautco:-"0.0008,0.0005"}
   prautco      = ${prautco:-"0.00015,0.00015"}
@@ -1141,10 +1107,14 @@ deflate_level=${deflate_level:-1}
   do_sppt      = ${do_sppt:-".false."}
   do_shum      = ${do_shum:-".false."}
   do_skeb      = ${do_skeb:-".false."}
+EOF
+
+if [ $RUN_CCPP = "YES" ]; then
+  cat >> input.nml << EOF
   iovr         = ${iovr:-"3"}
-  ltaerosol    = ${ltaerosol:-".true."}
+  ltaerosol    = ${ltaerosol:-".false."}
   lradar       = ${lradar:-".false."}
-  ttendlim     = ${ttendlim:-"-999"}
+  ttendlim     = ${ttendlim:-"0.005"}
   oz_phys      = ${oz_phys:-".false."}
   oz_phys_2015 = ${oz_phys_2015:-".true."}
   lsoil_lsm    = ${lsoil_lsm:-"4"}
@@ -1153,10 +1123,9 @@ deflate_level=${deflate_level:-1}
   icloud_bl    = ${icloud_bl:-"1"}
   bl_mynn_edmf = ${bl_mynn_edmf:-"1"}
   bl_mynn_tkeadvect = ${bl_mynn_tkeadvect:-".true."}
-  bl_mynn_edmf_mom = ${bl_mynn_edmf_mom:-"1"}
-  frac_grid    = ${frac_grid:-".false."}
-  min_lakeice  = ${min_lakeice:-"0.15"}
-  min_seaice   = ${min_seaice:-"0.15"}
+  bl_mynn_edmf_mom  = ${bl_mynn_edmf_mom:-"1"}
+  min_lakeice       = ${min_lakeice:-"0.15"}
+  min_seaice        = ${min_seaice:-"0.15"}
   do_RRTMGP          = ${do_RRTMGP:-".false."}
   active_gases       = ${active_gases:-"h2o_co2_o3_n2o_ch4_o2"}
   nGases             = ${nGases:-6}
@@ -1172,6 +1141,13 @@ deflate_level=${deflate_level:-1}
   doGP_lwscat        = ${doGP_lwscat:-".true."}
   use_LW_jacobian    = ${use_LW_jacobian:-".true."}
 EOF
+else
+  cat >> input.nml << EOF
+  iovr_lw      = ${iovr_lw:-"3"}
+  iovr_sw      = ${iovr_sw:-"3"}
+EOF
+fi
+
 
 # Add namelist for IAU
 if [ $DOIAU = "YES" ]; then
