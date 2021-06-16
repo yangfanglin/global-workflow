@@ -40,7 +40,7 @@ elif [ $machine = "orion" ]; then
     FIX_DIR="/work/noaa/global/glopara/fix_NEW"
 fi
 cd ${pwd}/../fix                ||exit 8
-for dir in fix_am   fix_cice  fix_fv3_fracoro    fix_gldas  fix_mom6  fix_reg2grb2   fix_verif \
+for dir in fix_am   fix_cice  fix_fv3_fracoro    fix_gldas  fix_mom6  fix_reg2grb2   fix_verif  fix_ugwd\
            fix_aer  fix_chem  fix_cpl   fix_fv3_gmted2010  fix_lut    fix_orog  fix_sfc_climo  fix_wave; do
     if [ -d $dir ]; then
       [[ $RUN_ENVIR = nco ]] && chmod -R 755 $dir
