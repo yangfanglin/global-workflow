@@ -67,6 +67,8 @@ NWPROD=${NWPROD:-${NWROOT:-$pwd}}
 HOMEgfs=${HOMEgfs:-$NWPROD}
 FIX_DIR=${FIX_DIR:-$HOMEgfs/fix}
 FIX_AM=${FIX_AM:-$FIX_DIR/fix_am}
+FIX_AER=${FIX_AER:-$FIX_DIR/fix_aer}
+FIX_LUT=${FIX_LUT:-$FIX_DIR/fix_lut}
 DATA=${DATA:-$pwd/fv3tmp$$}    # temporary running directory
 ROTDIR=${ROTDIR:-$pwd}         # rotating archive directory
 ICSDIR=${ICSDIR:-$pwd}         # cold start initial conditions
@@ -429,8 +431,18 @@ if [ $IAER -gt 0 ] ; then
   done
 fi
 
-#--fixed fields that are only used for CCPP physics options
-  # copy CCN_ACTIVATE.BIN for Thompson microphysics
+# merra2 aerosol climo
+for n in 01 02 03 04 05 06 07 08 09 10 11 12; do
+ $NLN $FIX_AER/merra2.aerclim.2003-2014.m${n}.nc $DATA/aeroclim.m${n}.nc
+done
+$NLN $FIX_LUT/optics_BC.v1_3.dat   $DATA/optics_BC.dat
+$NLN $FIX_LUT/optics_OC.v1_3.dat   $DATA/optics_OC.dat
+$NLN $FIX_LUT/optics_DU.v15_3.dat  $DATA/optics_DU.dat
+$NLN $FIX_LUT/optics_SS.v3_3.dat   $DATA/optics_SS.dat
+$NLN $FIX_LUT/optics_SU.v1_3.dat   $DATA/optics_SU.dat
+
+
+# copy CCN_ACTIVATE.BIN for Thompson microphysics
   $NLN $FIX_AM/CCN_ACTIVATE.BIN                        $DATA/.
   $NLN $FIX_AM/freezeH2O.dat                           $DATA/.
   $NLN $FIX_AM/qr_acr_qg.dat                           $DATA/.

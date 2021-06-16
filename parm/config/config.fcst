@@ -109,8 +109,10 @@ else
     export landice=".true."
 fi
 
-# Radiation options 
-export IAER=5111    ;#spectral band mapping method for aerosol optical properties
+# Radiation and aerosol options 
+export IAER=5111    ;#  111 opac aerosol and old aerosol optical properties
+                    ;# 5111 opac aerosol and spectral band optical properties
+                    ;# 1011 merra2 aerosol and GOCART look-up table optical properties                                                  
 export iovr_lw=3    ;#de-correlation length cloud overlap method (Barker, 2008) 
 export iovr_sw=3    ;#de-correlation length cloud overlap method (Barker, 2008) 
 export iovr=3       ;#de-correlation length cloud overlap method (Barker, 2008) 

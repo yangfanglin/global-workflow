@@ -33,14 +33,15 @@ pwd=$(pwd -P)
 if [ $machine == "cray" ]; then
     FIX_DIR="/gpfs/hps3/emc/global/noscrub/emc.glopara/git/fv3gfs/fix"
 elif [ $machine = "dell" ]; then
-    FIX_DIR="/gpfs/dell2/emc/modeling/noscrub/emc.glopara/git/fv3gfs/fix"
+    FIX_DIR="/gpfs/dell2/emc/modeling/noscrub/emc.glopara/git/fv3gfs/fix_NEW"
 elif [ $machine = "hera" ]; then
-    FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix"
+    FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix_NEW"
 elif [ $machine = "orion" ]; then
-    FIX_DIR="/work/noaa/global/glopara/fix"
+    FIX_DIR="/work/noaa/global/glopara/fix_NEW"
 fi
 cd ${pwd}/../fix                ||exit 8
-for dir in fix_am fix_fv3_gmted2010 fix_fv3_fracoro fix_gldas fix_orog fix_verif fix_wave_gfs ; do
+for dir in fix_am   fix_cice  fix_fv3_fracoro    fix_gldas  fix_mom6  fix_reg2grb2   fix_verif \
+           fix_aer  fix_chem  fix_cpl   fix_fv3_gmted2010  fix_lut    fix_orog  fix_sfc_climo  fix_wave; do
     if [ -d $dir ]; then
       [[ $RUN_ENVIR = nco ]] && chmod -R 755 $dir
       rm -rf $dir
