@@ -389,7 +389,7 @@ if [[ "$DOIAU" = "YES" ]]; then
 fi
 
 #--------------------------------------------------------------------------
-# Grid and orography data
+# Grid, orography and uGWD datasets 
 for n in $(seq 1 $ntiles); do
   $NLN $FIXfv3/${CASE}_grid.tile${n}.nc               $DATA/INPUT/${CASE}_grid.tile${n}.nc
   if [ -s $FIXfv3/${CASE}_oro_data.tile${n}.nc ]; then
@@ -397,7 +397,10 @@ for n in $(seq 1 $ntiles); do
   else
    $NLN $FIXfv3/oro_${CASE}.mx${reso}.tile${n}.nc      $DATA/INPUT/oro_data.tile${n}.nc
   fi
+  $NLN $FIXDIR/fix_ugwd/oro_data_ls.tile${n}.nc        $DATA/oro_data_ls.tile${n}.nc
+  $NLN $FIXDIR/fix_ugwd/oro_data_ss.tile${n}.nc        $DATA/oro_data_ss.tile${n}.nc
 done
+$NLN $FIXDIR/fix_ugwd/ugwp_limb_tau.nc                 $DATA/ugwp_limb_tau.nc             
 $NLN $FIXfv3/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
 
 # GFS standard input data
@@ -1057,10 +1060,18 @@ deflate_level=${deflate_level:-1}
        knob_ugwp_effac   = ${knob_ugwp_effac:-1,1,1,1}
        knob_ugwp_doaxyz  = ${knob_ugwp_doaxyz:-1}
        knob_ugwp_doheat  = ${knob_ugwp_doheat:-1}
-       knob_ugwp_dokdis  = ${knob_ugwp_dokdis:-1}
-       knob_ugwp_ndx4lh  = ${knob_ugwp_ndx4lh:-1}
-       knob_ugwp_version = ${knob_ugwp_version:-0}
-       launch_level      = ${launch_level:-54}                   
+       knob_ugwp_dokdis  = ${knob_ugwp_dokdis:-2}
+       knob_ugwp_ndx4lh  = ${knob_ugwp_ndx4lh:-4}
+       knob_ugwp_version = ${knob_ugwp_version:-1}
+       knob_ugwp_palaunch = 275.0e2
+       knob_ugwp_nslope   = 1
+       knob_ugwp_lzmax    = 15.750e3
+       knob_ugwp_lzmin    = 0.75e3
+       knob_ugwp_lzstar   = 2.0e3
+       knob_ugwp_taumin   = 0.25e-3
+       knob_ugwp_tauamp   = 3.0e-3
+       knob_ugwp_lhmet    = 200.0e3
+       knob_ugwp_orosolv  = 'pss-1986'
 /
 
 &external_ic_nml
@@ -1135,9 +1146,19 @@ deflate_level=${deflate_level:-1}
   lgfdlmprad   = ${lgfdlmprad:-".false."}
   effr_in      = ${effr_in:-".false."}
   cplwav       = ${cplwav:-".false."}
+  do_ugwp      = ${do_ugwp:-".false."}
+  do_tofd      = ${do_tofd:-".false."}
+  gwd_opt      = ${gwd_opt:-"2"}
+  do_ugwp_v0   = ${do_ugwp_v0:-".false."}
+  do_ugwp_v1   = ${do_ugwp_v1:-".true."}
+  do_ugwp_v0_orog_only = ${do_ugwp_v0_orog_only:-".false."}
+  do_ugwp_v0_nst_only  = ${do_ugwp_v0_nst_only:-".false."}
+  do_gsl_drag_ls_bl    = ${do_gsl_drag_ls_bl:-".true."}
+  do_gsl_drag_ss       = ${do_gsl_drag_ss:-".true."}
+  do_gsl_drag_tofd     = ${do_gsl_drag_tofd:-".true."}
+  do_ugwp_v1_w_gsldrag = ${do_ugwp_v1_w_gsldrag:-".false."}
+  do_ugwp_v1_orog_only = ${do_ugwp_v1_orog_only:-".false."}
   ldiag_ugwp   = ${ldiag_ugwp:-".false."}
-  do_ugwp      = ${do_ugwp:-".true."}
-  do_tofd      = ${do_tofd:-".true."}
   do_sppt      = ${do_sppt:-".false."}
   do_shum      = ${do_shum:-".false."}
   do_skeb      = ${do_skeb:-".false."}

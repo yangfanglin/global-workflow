@@ -59,11 +59,23 @@ export h2o_phys=".true."
 # Options of stratosphere O3 physics reaction coefficients
 export new_o3forc="YES"
 
+# --GFS.v16 uGWD.v0
 # do_ugwp=T: use unified CGWD and OGWD, and turbulent orographic form drag (TOFD)
 # do_ugwp=F: use unified CGWD but old OGWD, TOFD is not uded.
 export do_ugwp=".false."
-export do_tofd=".true."
+export do_tofd=".false."
 export launch_level=$(echo "$LEVS/2.35" |bc)
+
+# -- uGWD.v1
+export  gwd_opt=2
+export  do_ugwp_v0=".false."
+export  do_ugwp_v1=".true."
+export  do_gsl_drag_ls_bl=".true."
+export  do_gsl_drag_ss=".true."
+export  do_gsl_drag_tofd=".true."
+export  do_ugwp_v1_orog_only=".false."
+export  ldiag_ugwp=".false."
+
 
 export  n_sponge=42
 export  d2_bg_k1=0.20
